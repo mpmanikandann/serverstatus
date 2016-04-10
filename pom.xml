@@ -109,4 +109,14 @@
 	  </plugin>
     </plugins>
   </build>
+	<scm>
+		<url>https://github.com/mpmanikandann/serverstatus.git</url>
+		<connection>scm:git@github.com:mpmanikandann/serverstatus.git</connection>
+		<developerConnection>scm:git@github.com:mpmanikandann/serverstatus.git</developerConnection>
+		<tag>HEAD</tag>
+	</scm>
+	<organization>
+		<name>Webluminous</name>
+		<url>www.webluminous.com</url>
+	</organization>
 </project>

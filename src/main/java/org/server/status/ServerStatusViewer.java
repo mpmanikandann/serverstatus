@@ -42,14 +42,12 @@ public class ServerStatusViewer {
     for (String url : urllist) {
       try {
         ResultSetBean bean = new ResultSetBean();
-        bean.setDeployedversion(ServerStatusViewer.getResponse(url + "/version.jsp").toString());
-        bean.setContentswitch(ServerStatusViewer.getResponse(url + "/public/en_US/contentswitch").toString());
+        bean.setResponse(ServerStatusViewer.getResponse(url).toString());
         bean.setServername(new URL(url).getHost());
         resultSetBeanList.add(bean);
       } catch (UnknownHostException | SSLHandshakeException | MalformedURLException ex) {
         ResultSetBean bean = new ResultSetBean();
-        bean.setDeployedversion(ex.getMessage());
-        bean.setContentswitch(ex.getMessage());
+        bean.setResponse(ex.getMessage());
         bean.setServername(url);
         resultSetBeanList.add(bean);
       }
@@ -107,7 +105,7 @@ public class ServerStatusViewer {
 
   static void writefile(List<ResultSetBean> resultSetBean) throws IOException {
     String filepath = System.getProperty("user.dir");
-    String filename = "Result_" + System.currentTimeMillis() + ".txt";
+    String filename = "Result-"+getAppVersion()+ System.currentTimeMillis() + ".txt";
     File directory = new File(filepath);
     if (!directory.exists()) {
       directory.mkdirs();
