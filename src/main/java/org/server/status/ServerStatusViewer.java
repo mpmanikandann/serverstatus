@@ -1,12 +1,13 @@
 package org.server.status;
 
+import javax.net.ssl.SSLHandshakeException;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectOutputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -22,33 +23,39 @@ public class ServerStatusViewer {
 
   public static void main(String[] args) {
     try {
-      //System.out.println(ServerStatusViewer.getResponse("https://premier-uat3.activationnow.com/public/en_US/contentswitch").toString());
-      List<ResultSetBean> resultSetBeanList=new LinkedList<>();
-      List<String> urllist=new LinkedList<>();
-      urllist.add("https://premier-uat.activationnow.com");
-      urllist.add("https://premier-uat2.activationnow.com");
-      for(String url:urllist){
-       ResultSetBean bean=new ResultSetBean();
-        bean.setDeployedversion(ServerStatusViewer.getResponse(url+"/version.jsp").toString());
-        bean.setContentswitch(ServerStatusViewer.getResponse(url+"/public/en_US/contentswitch").toString());
-        bean.setServername(new URL(url).getHost());
-        resultSetBeanList.add(bean);
+      String filepath = System.getProperty("input.file");
+      List<String> urllist = null;
+      if (filepath != null) {
+        urllist = ServerStatusViewer.readFile(filepath);
       }
-      System.out.println(ServerStatusViewer.getAppVersion());
-      /*Map<String,String> drbvalue=ServerStatusViewer.getsncrdrbbundlefromDb("select * from SNF_B2B.SNF_DRB_BUNDLE WHERE BUNDLE='LOAD_BALANCER_SWITCH'","KEY_NAME","VALUE");
-      if(!drbvalue.isEmpty()){
-        for(Map.Entry<String, String> entry : drbvalue.entrySet()){
-        System.out.println(entry.getKey()+"="+entry.getValue());
-        }
-      }*/
-      writefile(resultSetBeanList);
-
+      if (urllist != null) {
+        List<ResultSetBean> resultSetBeanList = getResultset(urllist);
+        writefile(resultSetBeanList);
+      }
     }catch (IOException e){
       System.err.print(e.toString());
     }
   }
 
-  public static StringBuilder getResponse(String url) throws IOException {
+  static List<ResultSetBean> getResultset(List<String> urllist) throws IOException {
+    List<ResultSetBean> resultSetBeanList = new LinkedList<>();
+    for (String url : urllist) {
+      try {
+        ResultSetBean bean = new ResultSetBean();
+        bean.setResponse(ServerStatusViewer.getResponse(url).toString());
+        bean.setServername(new URL(url).getHost());
+        resultSetBeanList.add(bean);
+      } catch (UnknownHostException | SSLHandshakeException | MalformedURLException ex) {
+        ResultSetBean bean = new ResultSetBean();
+        bean.setResponse(ex.getMessage());
+        bean.setServername(url);
+        resultSetBeanList.add(bean);
+      }
+    }
+    return resultSetBeanList;
+  }
+
+  static StringBuilder getResponse(String url) throws IOException {
     StringBuilder builder = new StringBuilder();
     URL uri = new URL(url);
     InputStream inputStream = uri.openStream();
@@ -59,18 +66,18 @@ public class ServerStatusViewer {
     return builder;
   }
 
-  public static String getAppVersion() throws IOException{
+  static String getAppVersion() throws IOException {
     ResourceBundle bundle=ResourceBundle.getBundle(ServerStatusViewer.class.getName());
     return bundle.getString("Version");
   }
 
-  public static String getBundle(String key) throws IOException{
+  static String getBundle(String key) throws IOException {
     ResourceBundle bundle=ResourceBundle.getBundle(ServerStatusViewer.class.getName());
     return bundle.getString(key);
 
   }
 
-  public static Map<String,String> getsncrdrbbundlefromDb(String sql,String keycolname,String valuecolname){
+  static Map<String, String> getsncrdrbbundlefromDb(String sql, String keycolname, String valuecolname) {
     Map<String,String> bundlevalues=new HashMap<>();
     ApplicationDatasource datasource=ApplicationDatasource.getdataDatasource();
     try {
@@ -96,21 +103,60 @@ public class ServerStatusViewer {
     return bundlevalues;
   }
 
-
-  public static void writefile(List<ResultSetBean> resultSetBean) throws IOException{
-    String filename= "Result_" +System.currentTimeMillis()+".txt";
-    System.out.println(filename);
-      serilazeFile(filename,resultSetBean);
+  static void writefile(List<ResultSetBean> resultSetBean) throws IOException {
+    String filepath = System.getProperty("user.dir");
+    String filename = "Result-"+getAppVersion()+ System.currentTimeMillis() + ".txt";
+    File directory = new File(filepath);
+    if (!directory.exists()) {
+      directory.mkdirs();
+      File resultfile = new File(directory, filename);
+      if (!resultfile.exists()) {
+        resultfile.createNewFile();
+        serilazeFile(resultfile, resultSetBean);
+      } else {
+        serilazeFile(resultfile, resultSetBean);
+      }
+    } else {
+      File resultfile = new File(directory, filename);
+      if (!resultfile.exists()) {
+        resultfile.createNewFile();
+        serilazeFile(resultfile, resultSetBean);
+      } else {
+        serilazeFile(resultfile, resultSetBean);
+      }
+    }
   }
 
-  public static void serilazeFile(String filename,List<ResultSetBean> resultSetBean) throws IOException {
-    FileWriter fileOut=new FileWriter(filename);
+  public static void serilazeFile(File filename, List<ResultSetBean> resultSetBean) throws IOException {
+    FileWriter outputStream = new FileWriter(filename);
     for (ResultSetBean bean:resultSetBean) {
-      fileOut.write(bean.toString());
+      outputStream.write(bean.toString());
     }
 
-    fileOut.close();
+    outputStream.close();
   }
 
+  public static List<String> readFile(String filepath) throws IOException {
+    List<String> urlist = new LinkedList<>();
+    File file = new File(filepath);
+    if (file.isDirectory()) {
+      File dirfiles[] = file.listFiles();
+      for (File dir : dirfiles) {
+        Scanner scanner = new Scanner(dir);
+        while (scanner.hasNext()) {
+          urlist.add(scanner.next());
+        }
+        scanner.close();
+      }
+    } else {
+      Scanner scanner = new Scanner(file);
+      while (scanner.hasNext()) {
+        urlist.add(scanner.next());
+      }
+      scanner.close();
+    }
+
+    return urlist;
+  }
 
 }

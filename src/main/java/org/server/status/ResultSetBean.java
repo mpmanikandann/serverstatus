@@ -7,16 +7,14 @@ import java.io.Serializable;
  */
 public class ResultSetBean implements Serializable {
 private String servername;
-private String deployedversion;
-private String contentswitch;
+private String response;
 
   public ResultSetBean() {
   }
 
-  public ResultSetBean(String servername, String deployedversion, String contentswitch) {
+  public ResultSetBean(String servername, String response, String contentswitch) {
     this.servername = servername;
-    this.deployedversion = deployedversion;
-    this.contentswitch = contentswitch;
+    this.response = response;
   }
 
   public String getServername() {
@@ -27,24 +25,16 @@ private String contentswitch;
     this.servername = servername;
   }
 
-  public String getDeployedversion() {
-    return deployedversion;
+  public String getResponse() {
+    return response;
   }
 
-  public void setDeployedversion(String deployedversion) {
-    this.deployedversion = deployedversion;
-  }
-
-  public String getContentswitch() {
-    return contentswitch;
-  }
-
-  public void setContentswitch(String contentswitch) {
-    this.contentswitch = contentswitch;
+  public void setResponse(String response) {
+    this.response = response;
   }
 
   @Override
   public String toString() {
-     return servername+'|'+deployedversion+'|'+contentswitch+'|';
+     return servername + '|' + response;
   }
 }
