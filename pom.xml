@@ -118,4 +118,12 @@
 		<name>Webluminous</name>
 		<url>www.webluminous.com</url>
 	</organization>
+	<contributors>
+	<contributor>
+	<name>Manikandan P</name>
+	<email>mpmanikandann@gmail.com</email>
+	<organization>Webluminous</organization>
+	<organizationUrl>www.webluminous.com</organizationUrl>
+	</contributor>
+	</contributors>
 </project>
